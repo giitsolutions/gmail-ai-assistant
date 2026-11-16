@@ -2,6 +2,8 @@
 
 Ask questions in plain English about a Gmail inbox, for example *"How many rejections did I get last month?"*, *"Summarize my emails from this week"* or *"Any unread emails from HR?"*. The app answers from the actual emails and shows which emails it used.
 
+It can also **act on the inbox** from a chat message, always after you confirm: mark read/unread, star, archive, move to Trash, report spam, add/remove labels, and write, save as draft or send emails or replies. See [Actions](#actions-change-your-inbox).
+
 **100% free stack:** Python · Gmail API · Gemini 3.5 Flash-Lite (main) · Groq gpt-oss-120b (automatic backup) · optional Ollama (local) · Streamlit
 
 ---
@@ -16,13 +18,25 @@ User question  ("how many rejections did I get last month?")
       → (rejection OR unfortunately OR "not selected") newer_than:30d
    │
    ▼
-② Gmail API fetches the matching emails (read-only, 20 per request)
+② Gmail API fetches the matching emails (20 per request)
    │
    ▼
 ③ AI reads those emails and answers, citing each email it used as [Email N]
    │
    ▼
 ④ App shows the answer + only the cited emails as "Sources"
+```
+
+```
+User request
+   │
+   ▼
+Planner (1 AI call) → JSON: answer | action | message | clarify
+   │
+   ├─ answer  → search Gmail → AI answers with sources            (read only)
+   ├─ action  → search Gmail → show the emails → [Confirm] → change them (+ Undo)
+   ├─ message → AI writes a draft → you edit → [Save as draft] or [Send now]
+   └─ clarify → asks you a short question (request too vague or risky)
 ```
 
 This "search first, then answer" design (a simple form of RAG, Retrieval-Augmented Generation) means the AI only sees the emails it needs. It doesn't invent facts, and every answer can be checked against its sources.
@@ -44,8 +58,9 @@ Each answer shows which model answered it ("Answered by Gemini…" or "Answered 
 | File | What it does |
 |---|---|
 | `app.py` | Streamlit chat screen: sidebar, chat, sources, warnings |
-| `assistant.py` | The logic: question → Gmail search → answer, citations, counting rules |
-| `gmail_client.py` | Gmail login (OAuth, read-only) and fast batch fetching of emails |
+| `assistant.py` | The logic: planner (answer / action / message / clarify), Gmail search, answer, citations, counting rules |
+| `actions.py` | Everything that changes Gmail: labels, trash, drafts, sending. Safety limits live here |
+| `gmail_client.py` | Gmail login (OAuth) and fast batch fetching of emails |
 | `llm.py` | Calls the AI model: Gemini → Groq backup, or Ollama; retries and time limits |
 | `requirements.txt` | Python packages |
 | `.env.example` | Settings template (copy to `.env`) |
@@ -65,6 +80,7 @@ Files created during setup (never share or upload these, they are in `.gitignore
    - App name: `Gmail AI Assistant`, support email: yours
    - Audience: **External**
    - Then go to **Audience → Test users → Add users** and add the Gmail address you want to connect. **This step is required**, otherwise login shows "Access blocked".
+   - If Google blocks the login for missing permissions, open **Data Access → Add or remove scopes** and add `gmail.modify` and `gmail.compose`.
 4. Go to **Clients → Create client** → Application type **Desktop app** → **Create** → **Download JSON**.
 5. Rename the file to **`credentials.json`** and put it in this folder.
    > On Windows, file extensions are often hidden, so the file can end up named `credentials.json.json`. Check this if login says the file is not found.
@@ -90,7 +106,7 @@ pip install -r requirements.txt
 ```bash
 python gmail_client.py
 ```
-A browser opens. Choose the test3-user account. On *"Google hasn't verified this app"*, click **Continue**, then allow read access. The terminal should print your 5 latest emails. This creates `token.json`, so you won't need to log in again.
+A browser opens. Choose the Gmail account you added as a Test user. On *"Google hasn't verified this app"*, click **Advanced → Continue**, then tick **all** requested permissions (read/modify and compose) and continue. The terminal should print your 5 latest emails. This creates `token.json`, so you won't need to log in again.
 
 ---
 
@@ -104,6 +120,30 @@ The app opens at **http://localhost:8501**. Stop it with **Ctrl + C**.
 First run only: if Streamlit asks for an email in the terminal, just press Enter.
 
 ---
+
+## Actions: change your inbox
+
+Type what you want. Nothing changes until you click **✅ Confirm**.
+
+| You say | What happens |
+|---|---|
+| "Mark all Quick Heal emails as read" | Mark read / unread |
+| "Star emails from my professor" | Star / unstar |
+| "Archive old Flipkart mails" | Archive, or move back to Inbox |
+| "Move Uber promotions to trash" | Move to Trash / restore from Trash |
+| "Mark these as spam" | Spam / not spam |
+| "Label Wipro emails as Jobs" | Add / remove a label (creates it if needed) |
+| "Reply to Anjali saying I'm interested" | Writes a draft reply in the same thread |
+| "Write an email to abc@gmail.com asking for leave" | Writes a new draft |
+
+Safety rules:
+- **Confirmation first:** the app lists the exact emails (sender, subject, date) before changing anything.
+- **Undo:** after an action, **↩ Undo** appears in the sidebar.
+- **Trash only:** "delete" means Move to Trash (recoverable for 30 days). Permanent delete is not supported.
+- **Limit:** at most 50 emails per action. Vague requests ("delete everything") are refused with a question.
+- **Drafts:** the AI writes the message, you edit it, then choose **Save as draft** or **Send now**.
+- **Prompt-injection safe:** the action is chosen from your message only; text inside emails can never trigger an action.
+- Use a test Gmail account first, because this app now has permission to change the mailbox.
 
 ## Using the app
 
@@ -172,13 +212,15 @@ Google and Groq change models and limits often. If a model is retired, the app s
 | `Gemini model '…' was not found` | Model retired by Google: change `GEMINI_MODEL` in `.env` |
 | `503 UNAVAILABLE` / high demand | Temporary Google overload: the app retries, then switches to Groq |
 | Slow answers | Lower the slider; avoid many questions per minute (free-tier limits) |
-| Login expired / wrong account | Delete `token.json` and run `python gmail_client.py` again |
+| Google blocks login after the update (missing permissions) | Delete `token.json`, add `gmail.modify` and `gmail.compose` under Data Access in Google Cloud, log in again |
+| Login expired / wrong account | Google expires logins after 7 days while the Cloud app is in *Testing* mode. The app now asks you to log in again by itself; or delete `token.json` and run `python gmail_client.py` |
 
 ---
 
 ## Security and privacy
 
-- **Read-only:** the app uses the `gmail.readonly` scope, so it can never send, delete or change an email.
+- **Permissions:** the app uses `gmail.modify` (read, label, trash) and `gmail.compose` (drafts, send). It can **not** permanently delete mail.
+- **Confirmation:** every change needs a click, shows the affected emails, and can be undone.
 - **Data sent to AI providers:** the emails relevant to each question are sent to Gemini (or Groq). On free tiers, providers may use requests to improve their products. **For a company inbox**, use keys created from a company account, or use Ollama mode.
 - **Never share or upload** `credentials.json`, `token.json` or `.env`.
 
@@ -187,6 +229,7 @@ Google and Groq change models and limits often. If a model is retired, the app s
 - Daily email digest sent automatically
 - Vector database (ChromaDB) over the whole inbox for semantic search
 - Reading attachments (PDF text extraction)
-- Drafting replies (needs the `gmail.compose` scope)
+- Scheduled clean-ups (for example, trash promotions older than 30 days every week)
+- Unsubscribe helper for newsletters
 - Multi-user web login (web OAuth flow) and deployment
 - Exact counting with structured extraction (AI labels each email as JSON, Python counts)
