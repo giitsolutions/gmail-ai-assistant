@@ -1,6 +1,6 @@
 # Gmail AI Assistant
 
-Ask questions in plain English about a Gmail inbox, for example *"Summarize my emails from this week"* or *"Any unread emails from HR?"*. The app answers from the actual emails and shows which emails it used.
+Ask questions in plain English about a Gmail inbox, for example *"Summarize my emails from this week"* or *"Any unread emails from anyone?"*. The app answers from the actual emails and shows which emails it used.
 
 It can also **act on the inbox** from a chat message, always after you confirm: mark read/unread, star, archive, move to Trash, report spam, add/remove labels, and write, save as draft or send emails or replies. See [Actions](#actions-change-your-inbox).
 
@@ -128,12 +128,12 @@ Type what you want. Nothing changes until you click **✅ Confirm**.
 | You say | What happens |
 |---|---|
 | "Mark all Quick Heal emails as read" | Mark read / unread |
-| "Star emails from my professor" | Star / unstar |
-| "Archive old Flipkart mails" | Archive, or move back to Inbox |
+| "Star emails from any certain person" | Star / unstar |
+| "Archive old any brand mails" | Archive, or move back to Inbox |
 | "Move Uber promotions to trash" | Move to Trash / restore from Trash |
 | "Mark these as spam" | Spam / not spam |
 | "Label Wipro emails as Jobs" | Add / remove a label (creates it if needed) |
-| "Reply to Anjali saying I'm interested" | Writes a draft reply in the same thread |
+| "Reply to anyone saying I'm interested" | Writes a draft reply in the same thread |
 | "Write an email to abc@gmail.com asking for leave" | Writes a new draft |
 
 Safety rules:

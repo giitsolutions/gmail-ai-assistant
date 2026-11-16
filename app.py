@@ -66,11 +66,11 @@ with st.sidebar:
     st.markdown("**Try asking:**")
     st.markdown(
         "- Summarize my emails from this week\n"
-        "- Any unread emails from HR?\n"
-        "- Mark all emails from Quick Heal as read\n"
-        "- Move Flipkart promotions to trash\n"
-        "- Star emails from my professor\n"
-        "- Reply to Anjali saying I'm interested\n"
+        "- Any unread emails from anyone?\n"
+        "- Mark all emails as read\n"
+        "- Move any brand promotions to trash\n"
+        "- Star emails from any certain person\n"
+        "- Reply to anyone saying I'm interested\n"
         "- Write an email to abc@gmail.com asking for a leave"
     )
     st.caption("Changes always ask for your confirmation first. Deleting = Trash (recoverable for 30 days).")
