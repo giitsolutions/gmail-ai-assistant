@@ -1,6 +1,6 @@
 # Gmail AI Assistant
 
-Ask questions in plain English about a Gmail inbox, for example *"How many rejections did I get last month?"*, *"Summarize my emails from this week"* or *"Any unread emails from HR?"*. The app answers from the actual emails and shows which emails it used.
+Ask questions in plain English about a Gmail inbox, for example *"Summarize my emails from this week"* or *"Any unread emails from HR?"*. The app answers from the actual emails and shows which emails it used.
 
 It can also **act on the inbox** from a chat message, always after you confirm: mark read/unread, star, archive, move to Trash, report spam, add/remove labels, and write, save as draft or send emails or replies. See [Actions](#actions-change-your-inbox).
 
